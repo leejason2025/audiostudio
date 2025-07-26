@@ -12,7 +12,7 @@
   - Implement database connection and basic CRUD operations
   - _Requirements: 4.1_
 
-- [ ] 3. Implement file upload endpoint
+- [x] 3. Implement file upload endpoint
   - Create POST /upload endpoint that accepts MP3 files
   - Add basic file validation (format and size checking)
   - Store uploaded files in temporary directory
