@@ -4,6 +4,7 @@ from app.database import create_tables, get_db
 from app.models import UploadResponse, ErrorResponse
 from app.crud import JobCRUD
 from app.services.file_handler import FileHandler
+from app.tasks import process_audio_file
 from app.config import settings
 import logging
 
@@ -87,6 +88,9 @@ async def upload_file(
         
         # Save uploaded file
         file_path = FileHandler.save_uploaded_file(file, job.id)
+        
+        # Start asynchronous processing with Celery
+        process_audio_file.delay(job.id, file_path)
         
         return UploadResponse(
             job_id=job.id,

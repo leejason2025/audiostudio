@@ -25,13 +25,13 @@
   - Process MP3 files and return transcribed text
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [ ] 5. Create text summarization service
+- [x] 5. Create text summarization service
   - Implement summarization using OpenAI GPT API
   - Create simple prompt for generating summaries
   - Add basic text length validation
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 6. Set up basic task processing
+- [x] 6. Set up basic task processing
   - Install and configure Celery with Redis
   - Create simple Celery task for processing audio files
   - Implement processing pipeline: transcription → summarization
