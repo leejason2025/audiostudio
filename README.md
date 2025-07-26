@@ -90,17 +90,22 @@ The application will be available at http://localhost:8000
 
 **Test API Key Setup:**
 ```bash
-python test_api_key.py
+python tests/test_api_key.py
 ```
 
 **Test Transcription Service:**
 ```bash
-python test_transcription_direct.py test.mp3
+python tests/test_transcription_direct.py test.mp3
 ```
 
 **Test Upload Endpoint:**
 ```bash
-python test_upload.py
+python tests/test_upload.py
+```
+
+**Run Unit Tests:**
+```bash
+python -m pytest tests/test_transcription.py -v
 ```
 
 ## Specification

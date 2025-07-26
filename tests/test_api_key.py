@@ -31,8 +31,8 @@ def test_api_key():
     
     # Test the API key by creating a transcription service
     try:
-        sys.path.insert(0, 'app')
-        from services.transcription import get_transcription_service
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        from app.services.transcription import get_transcription_service
         
         print("🔧 Creating transcription service...")
         service = get_transcription_service()

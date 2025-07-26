@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Add app to path
-sys.path.insert(0, 'app')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 def test_transcription_with_file(mp3_file_path):
     """Test transcription service with an actual MP3 file"""
@@ -21,7 +21,7 @@ def test_transcription_with_file(mp3_file_path):
         return False
     
     try:
-        from services.transcription import get_transcription_service
+        from app.services.transcription import get_transcription_service
         
         print(f"🎵 Testing transcription with: {mp3_file_path}")
         print("-" * 50)
