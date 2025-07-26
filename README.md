@@ -18,11 +18,55 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
 - **Database**: SQLite for job tracking and results storage
 - **Deployment**: Docker containerization support
 
+## Project Structure
+
+```
+├── app/
+│   ├── __init__.py
+│   ├── main.py          # FastAPI application entry point
+│   └── config.py        # Configuration settings
+├── tests/
+│   └── __init__.py
+├── uploads/             # Temporary file storage
+├── venv/               # Virtual environment
+├── .env.example        # Environment variables template
+└── requirements.txt    # Python dependencies
+```
+
 ## Getting Started
+
+### Prerequisites
+- Python 3.9+
+- OpenAI API key
+
+### Installation
+
+1. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your OpenAI API key
+   ```
+
+4. Run the application:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+## Specification
 
 This project includes a complete specification in `.kiro/specs/audio-transcription-summarizer/` with:
 - Requirements document
 - System design
 - Implementation tasks
 
-To begin development, follow the tasks outlined in the spec or start with task 1: setting up the project structure and dependencies.
