@@ -6,7 +6,7 @@
   - Create basic environment configuration for API keys
   - _Requirements: 1.1_
 
-- [ ] 2. Create basic data models
+- [x] 2. Create basic data models
   - Create simple Pydantic models for API requests and responses
   - Set up basic SQLite database with ProcessingJob table
   - Implement database connection and basic CRUD operations
