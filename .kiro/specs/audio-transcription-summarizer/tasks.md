@@ -19,7 +19,7 @@
   - Return job ID for tracking
   - _Requirements: 1.1, 1.2, 1.4_
 
-- [ ] 4. Build speech-to-text transcription service
+- [x] 4. Build speech-to-text transcription service
   - Create transcription service using OpenAI Whisper API
   - Implement basic error handling for API failures
   - Process MP3 files and return transcribed text

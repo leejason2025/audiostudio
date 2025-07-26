@@ -37,7 +37,10 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
 
 ### Prerequisites
 - Python 3.9+
-- OpenAI API key
+- **OpenAI API key** (required for transcription functionality)
+  - Sign up at https://platform.openai.com/
+  - Generate an API key at https://platform.openai.com/api-keys
+  - Note: This service requires OpenAI credits/billing to be set up
 
 ### Installation
 
@@ -55,13 +58,50 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
 3. Configure environment variables:
    ```bash
    cp .env.example .env
-   # Edit .env and add your OpenAI API key
+   ```
+   
+   Edit the `.env` file and add your OpenAI API key:
+   ```
+   OPENAI_API_KEY=sk-your-actual-openai-api-key-here
+   ```
+   
+   **Important**: You need to obtain an OpenAI API key from https://platform.openai.com/api-keys
+
+4. Test your API key configuration:
+   ```bash
+   python test_api_key.py
    ```
 
-4. Run the application:
+5. Run the application:
    ```bash
    uvicorn app.main:app --reload
    ```
+
+The application will be available at http://localhost:8000
+
+### API Endpoints
+
+- `GET /` - Welcome message
+- `GET /health` - Health check including API key validation status
+- `POST /upload` - Upload MP3 file for processing
+- `GET /docs` - Interactive API documentation (Swagger UI)
+
+### Testing
+
+**Test API Key Setup:**
+```bash
+python test_api_key.py
+```
+
+**Test Transcription Service:**
+```bash
+python test_transcription_direct.py test.mp3
+```
+
+**Test Upload Endpoint:**
+```bash
+python test_upload.py
+```
 
 ## Specification
 
