@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite:///./app.db
+      - UPLOAD_DIR=./uploads
+      - MAX_FILE_SIZE_MB=50
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app.db:/app/app.db
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  worker:
+    build: .
+    command: python start_worker.py
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite:///./app.db
+      - UPLOAD_DIR=./uploads
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app.db:/app/app.db
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  redis_data:

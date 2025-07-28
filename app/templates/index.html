@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription Summarizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #040505;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ebebec;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #00c5af;
+            color: #ebebec;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .logo {
+            height: 60px;
+            width: auto;
+        }
+        
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #00c5af;
+            background: #f5f5f5;
+        }
+        
+        .upload-area.dragover {
+            border-color: #00c5af;
+            background: #f0f0f0;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #040505;
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: #00c5af;
+            color: #ebebec;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .upload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-section {
+            display: none;
+            padding: 20px 40px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #040505;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #00c5af;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .results-section {
+            display: none;
+            padding: 40px;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 5px solid #00c5af;
+        }
+        
+        .result-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #040505;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .result-content {
+            line-height: 1.6;
+            color: #040505;
+            font-size: 1em;
+        }
+        
+        .new-upload-btn {
+            background: #00c5af;
+            color: #ebebec;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 1em;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .file-info {
+            background: #f0f0f0;
+            color: #040505;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            border-left: 4px solid #00c5af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <img src="/static/talkyy.png" alt="Talkyy" class="header-logo">
+                Audio Transcription Summarizer
+            </h1>
+            <p>Upload your MP3 files and get AI-powered transcripts and summaries</p>
+        </div>
+        
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">
+                    <strong>Click to upload</strong> or drag and drop your MP3 file here
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept=".mp3,audio/mp3">
+                <button class="upload-btn" id="uploadBtn">Choose MP3 File</button>
+            </div>
+            <div id="fileInfo" class="file-info" style="display: none;"></div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </div>
+        
+        <div class="progress-section" id="progressSection">
+            <h3>🔄 Processing your audio file...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Uploading and starting transcription...</p>
+        </div>
+        
+        <div class="results-section" id="resultsSection">
+            <div class="result-card">
+                <div class="result-title">
+                    <span class="result-icon">📝</span>
+                    Transcript
+                </div>
+                <div class="result-content" id="transcriptContent"></div>
+            </div>
+            
+            <div class="result-card">
+                <div class="result-title">
+                    <span class="result-icon">📋</span>
+                    Summary
+                </div>
+                <div class="result-content" id="summaryContent"></div>
+            </div>
+            
+            <button class="new-upload-btn" onclick="resetUpload()">Upload Another File</button>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const progressSection = document.getElementById('progressSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const fileInfo = document.getElementById('fileInfo');
+        const errorMessage = document.getElementById('errorMessage');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const transcriptContent = document.getElementById('transcriptContent');
+        const summaryContent = document.getElementById('summaryContent');
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Validate file type
+            if (!file.type.includes('audio') && !file.name.toLowerCase().endsWith('.mp3')) {
+                showError('Please select an MP3 audio file.');
+                return;
+            }
+
+            // Validate file size (50MB limit)
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            if (file.size > maxSize) {
+                showError('File size must be less than 50MB.');
+                return;
+            }
+
+            showFileInfo(file);
+            uploadFile(file);
+        }
+
+        function showFileInfo(file) {
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfo.innerHTML = `
+                <strong>Selected file:</strong> ${file.name}<br>
+                <strong>Size:</strong> ${sizeInMB} MB<br>
+                <strong>Type:</strong> ${file.type || 'audio/mp3'}
+            `;
+            fileInfo.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            fileInfo.style.display = 'none';
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress section
+            uploadSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            progressFill.style.width = '20%';
+
+            try {
+                // Upload file
+                const uploadResponse = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+                }
+
+                const uploadResult = await uploadResponse.json();
+                const jobId = uploadResult.job_id;
+
+                progressFill.style.width = '40%';
+                progressText.textContent = 'File uploaded! Processing audio...';
+
+                // Poll for results
+                await pollForResults(jobId);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError(`Upload failed: ${error.message}`);
+                resetToUpload();
+            }
+        }
+
+        async function pollForResults(jobId) {
+            const maxAttempts = 60; // 5 minutes max
+            let attempts = 0;
+
+            const poll = async () => {
+                try {
+                    const statusResponse = await fetch(`/status/${jobId}`);
+                    const statusData = await statusResponse.json();
+
+                    attempts++;
+                    const progress = Math.min(40 + (attempts * 2), 90);
+                    progressFill.style.width = `${progress}%`;
+
+                    if (statusData.status === 'completed') {
+                        progressFill.style.width = '100%';
+                        progressText.textContent = 'Processing complete! Loading results...';
+
+                        // Get results
+                        const resultResponse = await fetch(`/result/${jobId}`);
+                        const resultData = await resultResponse.json();
+
+                        showResults(resultData);
+                        return;
+                    } else if (statusData.status === 'failed') {
+                        throw new Error(statusData.error || 'Processing failed');
+                    } else if (statusData.status === 'processing') {
+                        progressText.textContent = 'Transcribing audio and generating summary...';
+                    }
+
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000); // Poll every 5 seconds
+                    } else {
+                        throw new Error('Processing timeout - please try again');
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    showError(`Processing failed: ${error.message}`);
+                    resetToUpload();
+                }
+            };
+
+            poll();
+        }
+
+        function showResults(data) {
+            console.log('Received result data:', data);
+            console.log('Transcript:', data.transcript);
+            console.log('Summary:', data.summary);
+            
+            transcriptContent.textContent = data.transcript || 'No transcript available';
+            summaryContent.textContent = data.summary || 'No summary available';
+
+            progressSection.style.display = 'none';
+            resultsSection.style.display = 'block';
+        }
+
+        function resetUpload() {
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            fileInfo.style.display = 'none';
+            errorMessage.style.display = 'none';
+            fileInput.value = '';
+            progressFill.style.width = '0%';
+        }
+
+        function resetToUpload() {
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

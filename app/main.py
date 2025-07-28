@@ -1,4 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from app.database import create_tables, get_db
 from app.models import UploadResponse, ErrorResponse, ProcessingResult
@@ -16,6 +19,10 @@ app = FastAPI(
     description="API for transcribing MP3 files and generating summaries",
     version="1.0.0"
 )
+
+# Set up templates and static files
+templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Initialize database tables on startup
 @app.on_event("startup")
@@ -42,8 +49,14 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠ Could not validate OpenAI API key: {e}")
 
-@app.get("/")
-async def root():
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Serve the main web interface"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/api")
+async def api_root():
+    """API endpoint for programmatic access"""
     return {"message": "Audio Transcription Summarizer API"}
 
 @app.get("/health")
@@ -156,7 +169,7 @@ async def get_status(job_id: str, db: Session = Depends(get_db)):
             detail=f"Failed to get job status: {str(e)}"
         )
 
-@app.get("/result/{job_id}", response_model=ProcessingResult)
+@app.get("/result/{job_id}")
 async def get_result(job_id: str, db: Session = Depends(get_db)):
     """
     Retrieve the transcription and summary results for a completed job.
@@ -178,13 +191,17 @@ async def get_result(job_id: str, db: Session = Depends(get_db)):
         
         logger.debug(f"Job {job_id} result status: {job.status}")
         
-        return ProcessingResult(
-            job_id=job.id,
-            status=job.status,
-            transcription=job.transcription,
-            summary=job.summary,
-            error_message=job.error_message
-        )
+        result = {
+            "job_id": job.id,
+            "status": job.status,
+            "transcript": job.transcription,  # Frontend expects 'transcript'
+            "summary": job.summary,
+            "error_message": job.error_message
+        }
+        
+        logger.info(f"Returning result for job {job_id}: transcript length={len(job.transcription or '')}, summary length={len(job.summary or '')}")
+        
+        return result
         
     except HTTPException:
         # Re-raise HTTP exceptions

@@ -9,6 +9,7 @@ from app.main import app
 from app.database import get_db
 from app.models import Base, ProcessingJob
 import uuid
+import os
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_endpoints.db"
@@ -25,11 +26,14 @@ def override_get_db():
     finally:
         db.close()
 
+# Override the database dependency
 app.dependency_overrides[get_db] = override_get_db
+
+# Create test client
+client = TestClient(app)
 
 def test_status_endpoint_valid_job():
     """Test status endpoint with valid job ID"""
-    client = TestClient(app)
     
     # Create a test job directly in database
     db = TestingSessionLocal()
@@ -55,7 +59,6 @@ def test_status_endpoint_valid_job():
 
 def test_status_endpoint_invalid_job():
     """Test status endpoint with invalid job ID"""
-    client = TestClient(app)
     fake_job_id = str(uuid.uuid4())
     response = client.get(f"/status/{fake_job_id}")
     assert response.status_code == 404
@@ -63,7 +66,6 @@ def test_status_endpoint_invalid_job():
 
 def test_result_endpoint_valid_job():
     """Test result endpoint with valid job ID"""
-    client = TestClient(app)
     
     # Create a test job with results
     db = TestingSessionLocal()
@@ -92,7 +94,6 @@ def test_result_endpoint_valid_job():
 
 def test_result_endpoint_invalid_job():
     """Test result endpoint with invalid job ID"""
-    client = TestClient(app)
     fake_job_id = str(uuid.uuid4())
     response = client.get(f"/result/{fake_job_id}")
     assert response.status_code == 404
@@ -100,7 +101,6 @@ def test_result_endpoint_invalid_job():
 
 def test_result_endpoint_failed_job():
     """Test result endpoint with failed job"""
-    client = TestClient(app)
     
     # Create a test job with error
     db = TestingSessionLocal()

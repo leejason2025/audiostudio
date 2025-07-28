@@ -1,6 +1,6 @@
-# Audio Transcription Summarizer
+# 🎵 Audio Transcription Summarizer (Talkyy)
 
-A FastAPI-based web application that converts MP3 audio files into text transcriptions and generates concise summaries using AI.
+A modern, AI-powered web application that converts MP3 audio files into text transcriptions and generates concise summaries using OpenAI's Whisper and GPT models.
 
 ## Features
 
@@ -30,6 +30,10 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
 │   ├── crud.py              # Database operations
 │   ├── celery_app.py        # Celery configuration
 │   ├── tasks.py             # Celery background tasks
+│   ├── templates/
+│   │   └── index.html       # Web interface template
+│   ├── static/
+│   │   └── talkyy.png       # Application logo
 │   └── services/
 │       ├── __init__.py
 │       ├── transcription.py # OpenAI Whisper integration
@@ -37,20 +41,49 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
 │       └── file_handler.py  # File upload and validation
 ├── tests/
 │   ├── __init__.py
-│   ├── test_api_key.py          # API key validation tests
+│   ├── test_api_endpoints.py    # API endpoint tests
 │   ├── test_transcription.py    # Transcription service unit tests
 │   ├── test_summarization.py    # Summarization service unit tests
-│   ├── test_upload.py           # Upload endpoint tests
 │   ├── test_celery_tasks.py     # Celery task processing tests
 │   ├── test_full_pipeline.py    # End-to-end pipeline tests
-│   ├── test_transcription_direct.py  # Direct transcription testing
-│   └── test_summarization_manual.py  # Manual summarization testing
-├── uploads/             # Temporary file storage
+│   ├── test_core_workflow.py    # Core workflow tests
+│   ├── test_upload_workflow.py  # Upload workflow tests
+│   └── test_status_result_endpoints.py  # Status and result endpoint tests
+├── uploads/             # Temporary file storage (gitignored)
 ├── .kiro/specs/         # Project specification documents
+├── run_app.py           # Simple app launcher script
 ├── start_worker.py      # Celery worker startup script
+├── Dockerfile           # Docker container configuration
+├── docker-compose.yml   # Docker Compose setup
 ├── .env.example         # Environment variables template
 └── requirements.txt     # Python dependencies
 ```
+
+## 🚀 Quick Start
+
+The fastest way to get started:
+
+```bash
+# 1. Clone and setup
+git clone <your-repo-url>
+cd audiostudio
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+
+# 4. Start Redis (macOS)
+brew install redis
+brew services start redis
+
+# 5. Run the application
+python run_app.py
+```
+
+Then open http://localhost:8000 in your browser and start uploading MP3 files!
 
 ## Getting Started
 
@@ -107,6 +140,64 @@ A FastAPI-based web application that converts MP3 audio files into text transcri
    ```
 
 The application will be available at http://localhost:8000
+
+## Docker Deployment
+
+### Quick Start with Docker Compose
+
+1. Clone the repository and navigate to the project directory
+
+2. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Edit `.env` and add your OpenAI API key:
+   ```
+   OPENAI_API_KEY=sk-your-actual-openai-api-key-here
+   ```
+
+4. Build and start all services:
+   ```bash
+   docker-compose up --build
+   ```
+
+This will start:
+- Redis server for task queue
+- FastAPI application on port 8000
+- Celery worker for background processing
+
+The application will be available at http://localhost:8000
+
+### Manual Docker Build
+
+If you prefer to build and run containers manually:
+
+1. Build the Docker image:
+   ```bash
+   docker build -t audio-transcription-summarizer .
+   ```
+
+2. Start Redis:
+   ```bash
+   docker run -d --name redis -p 6379:6379 redis:7-alpine
+   ```
+
+3. Run the application:
+   ```bash
+   docker run -d --name app -p 8000:8000 --env-file .env \
+     --link redis:redis \
+     -e REDIS_URL=redis://redis:6379 \
+     audio-transcription-summarizer
+   ```
+
+4. Start the worker:
+   ```bash
+   docker run -d --name worker --env-file .env \
+     --link redis:redis \
+     -e REDIS_URL=redis://redis:6379 \
+     audio-transcription-summarizer python start_worker.py
+   ```
 
 ### API Endpoints
 
@@ -195,4 +286,37 @@ This project includes a complete specification in `.kiro/specs/audio-transcripti
 - Requirements document
 - System design  
 - Implementation tasks
+
+## Deployment
+
+### Production Considerations
+
+For production deployment, consider:
+
+1. **Environment Variables**: Ensure all required environment variables are properly set
+2. **Database**: Consider using PostgreSQL instead of SQLite for production
+3. **Redis**: Use a managed Redis service or configure Redis persistence
+4. **File Storage**: Consider using cloud storage (AWS S3, etc.) instead of local filesystem
+5. **Monitoring**: Add application monitoring and logging
+6. **Security**: Implement proper authentication and rate limiting
+
+### Environment Variables Reference
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `OPENAI_API_KEY` | OpenAI API key for Whisper and GPT | - | Yes |
+| `REDIS_URL` | Redis connection URL | `redis://localhost:6379` | Yes |
+| `DATABASE_URL` | Database connection URL | `sqlite:///./app.db` | No |
+| `UPLOAD_DIR` | Directory for temporary file storage | `./uploads` | No |
+| `MAX_FILE_SIZE_MB` | Maximum upload file size in MB | `50` | No |
+| `LOG_LEVEL` | Application logging level | `INFO` | No |
+
+### Health Check
+
+The application provides a health check endpoint at `/health` that verifies:
+- Application status
+- OpenAI API key configuration
+- Database connectivity
+
+Use this endpoint for container health checks and monitoring.
 

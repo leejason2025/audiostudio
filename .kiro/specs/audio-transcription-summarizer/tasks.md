@@ -50,13 +50,13 @@
   - Create basic logging for debugging
   - _Requirements: 5.1, 5.2_
 
-- [ ] 9. Write essential tests
+- [x] 9. Write essential tests
   - Create unit tests for core functions (transcription, summarization)
   - Add basic API endpoint tests
   - Test file upload and processing workflow
   - _Requirements: 2.2, 3.2_
 
-- [ ] 10. Create simple deployment setup
+- [x] 10. Create simple deployment setup
   - Add requirements.txt with all dependencies
   - Create basic Docker setup for containerization
   - Add simple configuration for environment variables

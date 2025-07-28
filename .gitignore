@@ -69,3 +69,13 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis dump
+dump.rdb
+
+# Docker volumes
+docker-volumes/
