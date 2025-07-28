@@ -38,13 +38,13 @@
   - Update job status in database during processing
   - _Requirements: 6.1, 6.2_
 
-- [ ] 7. Create status and result endpoints
+- [x] 7. Create status and result endpoints
   - Implement GET /status/{job_id} to check processing status
   - Create GET /result/{job_id} to retrieve transcription and summary
   - Add basic error responses for invalid job IDs
   - _Requirements: 4.1, 4.2_
 
-- [ ] 8. Add basic error handling and cleanup
+- [x] 8. Add basic error handling and cleanup
   - Implement simple error handling for failed processing
   - Add file cleanup after processing completion
   - Create basic logging for debugging

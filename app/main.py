@@ -1,15 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import create_tables, get_db
-from app.models import UploadResponse, ErrorResponse
+from app.models import UploadResponse, ErrorResponse, ProcessingResult
 from app.crud import JobCRUD
 from app.services.file_handler import FileHandler
 from app.tasks import process_audio_file
 from app.config import settings
 import logging
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Get logger (logging is configured in config.py)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -76,33 +75,124 @@ async def upload_file(
     
     Returns a job ID that can be used to track processing status and retrieve results.
     """
+    logger.info(f"Upload request received for file: {file.filename}")
+    
     try:
         # Validate file format
         FileHandler.validate_mp3_file(file)
+        logger.debug(f"File format validation passed for: {file.filename}")
         
         # Validate file size
         FileHandler.validate_file_size(file)
+        logger.debug(f"File size validation passed for: {file.filename}")
         
         # Create job record in database
         job = JobCRUD.create_job(db, filename=file.filename or "unknown.mp3")
+        logger.info(f"Created job {job.id} for file: {file.filename}")
         
         # Save uploaded file
         file_path = FileHandler.save_uploaded_file(file, job.id)
+        logger.info(f"Saved file for job {job.id} at: {file_path}")
         
         # Start asynchronous processing with Celery
-        process_audio_file.delay(job.id, file_path)
+        task = process_audio_file.delay(job.id, file_path)
+        logger.info(f"Started processing task {task.id} for job {job.id}")
         
         return UploadResponse(
             job_id=job.id,
             status=job.status
         )
         
-    except HTTPException:
+    except HTTPException as e:
+        logger.warning(f"Upload validation failed for {file.filename}: {e.detail}")
         # Re-raise HTTP exceptions (validation errors)
         raise
     except Exception as e:
+        logger.error(f"Unexpected error during upload for {file.filename}: {str(e)}")
         # Handle unexpected errors
         raise HTTPException(
             status_code=500,
             detail=f"Failed to process upload: {str(e)}"
+        )
+
+@app.get("/status/{job_id}")
+async def get_status(job_id: str, db: Session = Depends(get_db)):
+    """
+    Check the processing status of a job.
+    
+    Returns the current status of the processing job.
+    """
+    logger.debug(f"Status request for job: {job_id}")
+    
+    try:
+        # Get job from database
+        job = JobCRUD.get_job(db, job_id)
+        
+        if not job:
+            logger.warning(f"Job not found: {job_id}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Job with ID {job_id} not found"
+            )
+        
+        logger.debug(f"Job {job_id} status: {job.status}")
+        
+        return {
+            "job_id": job.id,
+            "status": job.status,
+            "filename": job.filename,
+            "created_at": job.created_at.isoformat() if job.created_at else None,
+            "error_message": job.error_message
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error getting status for job {job_id}: {str(e)}")
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get job status: {str(e)}"
+        )
+
+@app.get("/result/{job_id}", response_model=ProcessingResult)
+async def get_result(job_id: str, db: Session = Depends(get_db)):
+    """
+    Retrieve the transcription and summary results for a completed job.
+    
+    Returns the full transcription and summary if processing is complete.
+    """
+    logger.debug(f"Result request for job: {job_id}")
+    
+    try:
+        # Get job from database
+        job = JobCRUD.get_job(db, job_id)
+        
+        if not job:
+            logger.warning(f"Job not found for result request: {job_id}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Job with ID {job_id} not found"
+            )
+        
+        logger.debug(f"Job {job_id} result status: {job.status}")
+        
+        return ProcessingResult(
+            job_id=job.id,
+            status=job.status,
+            transcription=job.transcription,
+            summary=job.summary,
+            error_message=job.error_message
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error getting result for job {job_id}: {str(e)}")
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get job result: {str(e)}"
         )
